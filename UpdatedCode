@@ -1,0 +1,283 @@
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+import java.util.*;
+
+public class E_LearningPlatform extends Application {
+
+    // Mock databases
+    private static Map<String, User> users = new HashMap<>();
+    private static List<Course> courses = new ArrayList<>();
+    private static Map<String, List<Course>> enrollments = new HashMap<>();
+    private static Map<String, Double> payments = new HashMap<>();
+    private Stage primaryStage;
+    private String selectedRole;
+
+    @Override
+    public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+        showRoleSelectionScreen();
+    }
+
+    private void showRoleSelectionScreen() {
+        VBox selectionBox = new VBox(15);
+        selectionBox.setAlignment(Pos.CENTER);
+        selectionBox.setPadding(new Insets(20));
+
+        Label titleLabel = new Label("E-Learning Platform");
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+
+        Button adminButton = createRoleButton("Admin", "#4CAF50");
+        Button instructorButton = createRoleButton("Instructor", "#2196F3");
+        Button studentButton = createRoleButton("Student", "#FFC107");
+
+        selectionBox.getChildren().addAll(titleLabel, adminButton, instructorButton, studentButton);
+
+        Scene scene = new Scene(selectionBox);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("E-Learning Platform - Role Selection");
+        primaryStage.setMaximized(true);
+        primaryStage.show();
+    }
+
+    private Button createRoleButton(String role, String color) {
+        Button button = new Button(role + " Login");
+        button.setStyle("-fx-background-color: " + color + "; -fx-text-fill: white;");
+        button.setMaxWidth(200);
+        button.setOnAction(e -> {
+            selectedRole = role;
+            showLoginScreen();
+        });
+        return button;
+    }
+
+    // Login screen
+    private void showLoginScreen() {
+        VBox loginBox = new VBox(15);
+        loginBox.setAlignment(Pos.CENTER);
+        loginBox.setPadding(new Insets(20));
+
+        Label titleLabel = new Label(selectedRole + " Login");
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+
+        TextField usernameField = new TextField();
+        usernameField.setMaxWidth(200);
+        usernameField.setPromptText("Username");
+
+        PasswordField passwordField = new PasswordField();
+        passwordField.setMaxWidth(200);
+        passwordField.setPromptText("Password");
+
+        Button loginButton = new Button("Login");
+        loginButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+        loginButton.setMaxWidth(200);
+
+        Button backButton = new Button("Back");
+        backButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
+        backButton.setMaxWidth(200);
+        backButton.setOnAction(e -> showRoleSelectionScreen());
+
+        Runnable loginAction = () -> {
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+            User user = users.get(username);
+            if (user != null && user.password.equals(password) && user.role.equals(selectedRole)) {
+                switch (selectedRole) {
+                    case "Admin":
+                        showAdminDashboard();
+                        break;
+                    case "Instructor":
+                        showInstructorDashboard();
+                        break;
+                    case "Student":
+                        showStudentDashboard();
+                        break;
+                }
+            } else {
+                showAlert("Login Failed", "Invalid username or password.");
+            }
+        };
+
+        loginButton.setOnAction(e -> loginAction.run());
+
+        loginBox.setOnKeyPressed(event -> {
+            if (event.getCode().toString().equals("ENTER")) {
+                loginAction.run();
+            }
+        });
+
+        loginBox.getChildren().addAll(titleLabel, usernameField, passwordField, loginButton, backButton);
+
+        Scene scene = new Scene(loginBox);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("E-Learning Platform - " + selectedRole + " Login");
+        primaryStage.setMaximized(true);
+        primaryStage.show();
+
+        usernameField.requestFocus();
+    }
+
+    // Admin dashboard
+    private void showAdminDashboard() {
+        VBox dashboard = createDashboard("Admin Dashboard", new String[]{"Manage Users", "Manage Courses", "Track Enrollments", "Generate Reports"}, new Runnable[]{this::manageUsers, this::manageCourses, this::trackEnrollments, this::generateReports});
+        setScene(dashboard, "Admin Dashboard");
+    }
+
+    // Instructor Dashboard
+    private void showInstructorDashboard() {
+        VBox dashboard = createDashboard("Instructor Dashboard", new String[]{"Create Course", "Manage Assignments", "Track Student Progress", "Manage Profile"}, new Runnable[]{() -> createCourse("New Course", "Instructor"), () -> System.out.println("Managing assignments..."), () -> System.out.println("Tracking progress..."), () -> System.out.println("Managing profile...")});
+        setScene(dashboard, "Instructor Dashboard");
+    }
+
+    // Student Dashboard
+    private void showStudentDashboard() {
+        VBox dashboard = createDashboard("Student Dashboard", new String[]{"Enroll in Course", "View Progress", "Make Payment", "Manage Account"}, new Runnable[]{() -> enrollInCourse("Student", "New Course"), () -> viewLearningProgress("Student"), () -> makePayment("Student"), () -> System.out.println("Managing account...")});
+        setScene(dashboard, "Student Dashboard");
+    }
+
+    private VBox createDashboard(String title, String[] buttonLabels, Runnable[] actions) {
+        VBox dashboard = new VBox(15);
+        dashboard.setAlignment(Pos.CENTER);
+        dashboard.setPadding(new Insets(20));
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+        dashboard.getChildren().add(titleLabel);
+
+        for (int i = 0; i < buttonLabels.length; i++) {
+            Button button = new Button(buttonLabels[i]);
+            int index = i;
+            button.setOnAction(e -> actions[index].run());
+            button.setStyle("-fx-background-color: #008CBA; -fx-text-fill: white;");
+            button.setMaxWidth(Double.MAX_VALUE);
+            dashboard.getChildren().add(button);
+        }
+
+        Button logoutButton = new Button("Logout");
+        logoutButton.setOnAction(e -> showLoginScreen());
+        logoutButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
+        logoutButton.setMaxWidth(Double.MAX_VALUE);
+        dashboard.getChildren().add(logoutButton);
+
+        return dashboard;
+    }
+
+    private void setScene(Pane root, String title) {
+        Scene scene = new Scene(root);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle(title);
+        primaryStage.setMaximized(true);
+    }
+
+    private void showAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
+
+    // Admin Functionalities
+    private void manageUsers() {
+        System.out.println("Managing users: Add, Update, Delete instructor, student, and admin accounts.");
+        users.put("newUser", new User("newUser", "password", "Student"));
+        System.out.println("User added: newUser (Student)");
+    }
+
+    private void manageCourses() {
+        System.out.println("Managing courses: Add, Update, Delete course content, pricing, and schedules.");
+    }
+
+    private void trackEnrollments() {
+        System.out.println("Tracking enrollments and payments:");
+        enrollments.forEach((user, courses) -> {
+            System.out.println(user + " is enrolled in: " + courses);
+        });
+        payments.forEach((user, amount) -> {
+            System.out.println(user + " has paid: $" + amount);
+        });
+    }
+
+    private void generateReports() {
+        System.out.println("Generating reports on course performance and student progress...");
+    }
+
+    // Instructor Functionalities
+    private void createCourse(String courseName, String instructorName) {
+        courses.add(new Course(courseName, instructorName, 100.0, "Weekdays 10AM-12PM"));
+        System.out.println("Course created: " + courseName + " by " + instructorName);
+    }
+
+    // Student Functionalities
+    private void enrollInCourse(String username, String courseName) {
+        Course course = courses.stream()
+                .filter(c -> c.getCourseName().equals(courseName))
+                .findFirst()
+                .orElse(null);
+
+        if (course != null) {
+            enrollments.computeIfAbsent(username, k -> new ArrayList<>()).add(course);
+            System.out.println(username + " enrolled in " + courseName);
+        } else {
+            System.out.println("Course not found: " + courseName);
+        }
+    }
+
+    private void viewLearningProgress(String username) {
+        List<Course> userCourses = enrollments.getOrDefault(username, new ArrayList<>());
+        System.out.println(username + " is enrolled in: " + userCourses);
+    }
+
+    private void makePayment(String username) {
+        payments.put(username, 100.0); // Example payment
+        System.out.println(username + " made a payment of $100.");
+    }
+
+    // Course class
+    private static class Course {
+        private String courseName;
+        private String instructorName;
+        private double price;
+        private String schedule;
+
+        public Course(String courseName, String instructorName, double price, String schedule) {
+            this.courseName = courseName;
+            this.instructorName = instructorName;
+            this.price = price;
+            this.schedule = schedule;
+        }
+
+        public String getCourseName() {
+            return courseName;
+        }
+
+        @Override
+        public String toString() {
+            return "Course: " + courseName + ", Instructor: " + instructorName + ", Price: $" + price + ", Schedule: " + schedule;
+        }
+    }
+
+    // User class
+    private static class User {
+        private String username;
+        private String password;
+        private String role;
+
+        public User(String username, String password, String role) {
+            this.username = username;
+            this.password = password;
+            this.role = role;
+        }
+    }
+
+    public static void main(String[] args) {
+        users.put("admin", new User("admin", "admin123", "Admin"));
+        users.put("instructor", new User("instructor", "inst123", "Instructor"));
+        users.put("student", new User("student", "stud123", "Student"));
+        launch(args);
+    }
+}
