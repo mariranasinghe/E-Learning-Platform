@@ -1,18 +1,17 @@
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
+   
+    import javafx.application.Application;
+    import javafx.scene.Scene;
+    import javafx.scene.control.*;
+    import javafx.scene.layout.VBox;
+    import javafx.stage.Stage;
+    import java.util.*;
 
-import java.util.*;
-
-public class ELearningPlatform extends Application {
-
-    // Mock databases
+    public class ELearningPlatform extends Application {
     private static Map<String, User> users = new HashMap<>(); // username -> User object
     private static List<Course> courses = new ArrayList<>();
     private static Map<String, List<Course>> enrollments = new HashMap<>(); // username -> enrolled courses
-    private static Map<String, Double> payments = new HashMap<>(); // username -> payment amount
+
+
 
     @Override
     public void start(Stage primaryStage) {
